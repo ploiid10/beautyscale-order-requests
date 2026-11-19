@@ -122,6 +122,78 @@ func TestAcceptTwiceIsBlocked(t *testing.T) {
 	}
 }
 
+func TestSameOpenRequestCannotBeSubmittedTwice(t *testing.T) {
+	reset(t)
+	insertProduct(t, ws1, p1, "Rose Serum", 500, 5)
+	insertProduct(t, ws1, p2, "Silk Cleanser", 300, 5)
+	srv := newServer(t)
+
+	first := map[string]any{
+		"buyerName":  "Ada Buyer",
+		"buyerEmail": "Ada@Example.com",
+		"lines": []map[string]any{
+			{"productId": p2, "quantity": 1},
+			{"productId": p1, "quantity": 2},
+		},
+	}
+	status, body := doJSON(t, http.MethodPost, srv.URL+"/api/order-requests", ws1, first)
+	if status != http.StatusCreated {
+		t.Fatalf("create status %d body %s", status, body)
+	}
+	var created struct {
+		ID string `json:"id"`
+	}
+	mustDecode(t, body, &created)
+
+	second := map[string]any{
+		"buyerName":  "Ada B.",
+		"buyerEmail": "ada@example.com",
+		"lines": []map[string]any{
+			{"productId": p1, "quantity": 2},
+			{"productId": p2, "quantity": 1},
+		},
+	}
+	status, body = doJSON(t, http.MethodPost, srv.URL+"/api/order-requests", ws1, second)
+	if status != http.StatusConflict {
+		t.Fatalf("duplicate status %d body %s", status, body)
+	}
+	if !bytes.Contains(body, []byte("this request was already submitted")) {
+		t.Fatalf("duplicate body %s", body)
+	}
+
+	otherBuyer := map[string]any{
+		"buyerName":  "Bea Shop",
+		"buyerEmail": "bea@example.com",
+		"lines":      second["lines"],
+	}
+	status, body = doJSON(t, http.MethodPost, srv.URL+"/api/order-requests", ws1, otherBuyer)
+	if status != http.StatusCreated {
+		t.Fatalf("other buyer status %d body %s", status, body)
+	}
+
+	changedQty := map[string]any{
+		"buyerName":  "Ada Buyer",
+		"buyerEmail": "ada@example.com",
+		"lines": []map[string]any{
+			{"productId": p1, "quantity": 3},
+			{"productId": p2, "quantity": 1},
+		},
+	}
+	status, body = doJSON(t, http.MethodPost, srv.URL+"/api/order-requests", ws1, changedQty)
+	if status != http.StatusCreated {
+		t.Fatalf("changed qty status %d body %s", status, body)
+	}
+
+	status, body = doJSON(t, http.MethodPost, srv.URL+"/api/order-requests/"+created.ID+"/reject", ws1, nil)
+	if status != http.StatusOK {
+		t.Fatalf("reject status %d body %s", status, body)
+	}
+	status, body = doJSON(t, http.MethodPost, srv.URL+"/api/order-requests", ws1, second)
+	if status != http.StatusCreated {
+		t.Fatalf("resubmit after reject status %d body %s", status, body)
+	}
+}
+
 func TestAcceptInsufficientStockRollsBack(t *testing.T) {
 	reset(t)
 	insertProduct(t, ws1, p1, "Rose Serum", 500, 5)

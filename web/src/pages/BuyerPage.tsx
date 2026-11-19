@@ -120,6 +120,7 @@ export function BuyerPage() {
         <button
           type="button"
           className="primary"
+          style={{ marginTop: 16 }}
           onClick={() => {
             setConfirmation(null);
             setBuyerName("");

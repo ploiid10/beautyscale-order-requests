@@ -148,6 +148,9 @@ func (s *Service) Create(ctx context.Context, workspaceID uuid.UUID, in CreateIn
 
 	created, err := db.InsertOrderRequest(ctx, tx, workspaceID, name, email, lines)
 	if err != nil {
+		if isConstraintViolation(err, "order_requests_open_same_idx") {
+			return db.OrderRequest{}, Conflict("This request was already submitted")
+		}
 		return db.OrderRequest{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {

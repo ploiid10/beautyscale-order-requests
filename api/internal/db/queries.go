@@ -2,6 +2,8 @@ package db
 
 import (
 	"context"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -165,9 +167,9 @@ func InsertOrderRequest(ctx context.Context, q Querier, workspaceID uuid.UUID, b
 	id := uuid.New()
 	var createdAt time.Time
 	err = q.QueryRow(ctx, `
-		INSERT INTO order_requests (id, workspace_id, buyer_name, buyer_email, status)
-		VALUES ($1, $2, $3, $4, 'new')
-		RETURNING created_at`, id, workspaceID, buyerName, buyerEmail).Scan(&createdAt)
+		INSERT INTO order_requests (id, workspace_id, buyer_name, buyer_email, status, line_key)
+		VALUES ($1, $2, $3, $4, 'new', $5)
+		RETURNING created_at`, id, workspaceID, buyerName, buyerEmail, lineKey(lines)).Scan(&createdAt)
 	if err != nil {
 		return OrderRequest{}, err
 	}
@@ -184,6 +186,19 @@ func InsertOrderRequest(ctx context.Context, q Querier, workspaceID uuid.UUID, b
 		TotalMinor: total,
 		Lines:      nonNilLines(lines),
 	}, nil
+}
+
+// lineKey identifies a set of lines independent of the order they were submitted.
+func lineKey(lines []Line) string {
+	sorted := append([]Line(nil), lines...)
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].ProductID < sorted[j].ProductID
+	})
+	parts := make([]string, len(sorted))
+	for i, line := range sorted {
+		parts[i] = line.ProductID + ":" + strconv.Itoa(line.Quantity)
+	}
+	return strings.Join(parts, "|")
 }
 
 // InsertDraftOrder copies lines onto a new draft. order_request_id is unique.

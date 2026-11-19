@@ -77,7 +77,7 @@ Missing or invalid `X-Workspace-ID` is 400. A row that belongs to another worksp
 - `POST /api/order-requests/{id}/accept`
 - `POST /api/order-requests/{id}/reject`
 
-Accept returns 409 when the request is no longer new or stock is too low. The stock error names the product. Reject returns 409 once the request has already been decided, and it does not change stock.
+Accept returns 409 when the request is no longer new or stock is too low. The stock error names the product. Reject returns 409 once the request has already been decided, and it does not change stock. Create returns 409 when that buyer already has a `new` request with the same products and quantities.
 
 ## Design choices
 
@@ -86,6 +86,7 @@ Accept returns 409 when the request is no longer new or stock is too low. The st
 - Prices are copied onto the request at submit time. A request that mixes currencies is rejected.
 - Line rows store `workspace_id` and foreign keys back to the request and the product in that same workspace, so a line cannot point at another brand's product.
 - Every read and write includes the workspace id from the header.
+- The same buyer cannot submit the same lines twice while that request is still `new`. The match is the workspace, the email (ignoring case), and the products with their quantities. A partial unique index enforces it, including when two submits arrive together. After the request is accepted or rejected, that buyer can submit it again.
 
 ## Shortcuts, and what is next
 
