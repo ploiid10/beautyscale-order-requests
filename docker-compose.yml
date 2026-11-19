@@ -1,0 +1,45 @@
+name: beautyscale-orders
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-orders}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orders}
+      POSTGRES_DB: ${POSTGRES_DB:-orders}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  api:
+    build:
+      context: ./api
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-orders}:${POSTGRES_PASSWORD:-orders}@postgres:5432/${POSTGRES_DB:-orders}?sslmode=disable
+      HTTP_ADDR: ":8080"
+      MIGRATIONS_DIR: /app/migrations
+      SEED_FILE: /app/seed/seed.sql
+      SEED: "true"
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./web
+    ports:
+      - "${WEB_PORT:-5173}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:

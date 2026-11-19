@@ -1,0 +1,6 @@
+.env
+.DS_Store
+api/bin
+api/tmp
+web/node_modules
+web/dist
