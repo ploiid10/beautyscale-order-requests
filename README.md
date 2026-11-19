@@ -55,7 +55,7 @@ Tests use a separate database, `orders_test`, on that Postgres. They cover stock
 
 ## Seeded workspaces
 
-The header switcher uses these ids.
+The workspace dropdown in the header is for the demo. There is no login, so the select is how you act as one brand or the other and check that they cannot read or write each other's requests. It only chooses the `X-Workspace-ID` sent with every API call. Isolation is enforced by the API: each query is limited to that workspace, and another workspace's request is 404.
 
 - Lumen Atelier: `8f1c0b2e-6a4d-4c1e-9b7a-1d2e3f4a5b6c` (USD)
 - Northline Beauty: `3c9e1a70-2b54-4f8d-a6e1-7b8c9d0e1f2a` (EUR)
@@ -90,7 +90,7 @@ Accept returns 409 when the request is no longer new or stock is too low. The st
 
 ## Shortcuts, and what is next
 
-- No authentication. The workspace header is the whole access check.
+- No authentication. The workspace header is the whole access check. The header dropdown exists so a demo can switch brands; a real app would use the signed-in brand instead.
 - Pagination is limit/offset.
 - `GET /api/order-requests/{id}` is extra. The sales page uses it to open one request, and a cross-workspace read is a 404 rather than an empty list.
 - Product names on a request are read from the current catalog. There is no rename API.
