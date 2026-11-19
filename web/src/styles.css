@@ -125,6 +125,8 @@ th {
   color: var(--muted);
 }
 
+tr.clickable { cursor: pointer; }
+tr.clickable:hover { background: #f8f1ea; }
 tr.selected { background: #f8f1ea; }
 
 .row-button {
@@ -150,7 +152,7 @@ tr.selected { background: #f8f1ea; }
 
 button:disabled { opacity: 0.6; }
 
-.total { font-size: 18px; margin: 8px 0; }
+.total { font-size: 18px }
 
 .filters { display: flex; gap: 8px; margin: 18px 0; flex-wrap: wrap; }
 

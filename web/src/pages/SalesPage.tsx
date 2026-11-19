@@ -96,7 +96,7 @@ export function SalesPage() {
               setNotice("");
             }}
           >
-            {item}
+            {item.charAt(0).toUpperCase() + item.slice(1)}
           </button>
         ))}
       </div>
@@ -134,7 +134,7 @@ export function SalesPage() {
                 {page.items.map((item) => (
                   <tr
                     key={item.id}
-                    className={item.id === selectedId ? "selected" : undefined}
+                    className={item.id === selectedId ? "selected" : "clickable"}
                     onClick={() => {
                       setSelectedId(item.id);
                       setNotice("");
