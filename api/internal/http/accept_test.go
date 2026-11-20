@@ -157,7 +157,7 @@ func TestSameOpenRequestCannotBeSubmittedTwice(t *testing.T) {
 	if status != http.StatusConflict {
 		t.Fatalf("duplicate status %d body %s", status, body)
 	}
-	if !bytes.Contains(body, []byte("this request was already submitted")) {
+	if !bytes.Contains(body, []byte("This request was already submitted")) {
 		t.Fatalf("duplicate body %s", body)
 	}
 
